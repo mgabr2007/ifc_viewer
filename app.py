@@ -18,35 +18,34 @@ if uploaded_file is not None:
     base64_file = base64.b64encode(uploaded_file.getvalue()).decode('utf-8')
     file_data = f"data:application/octet-stream;base64,{base64_file}"
 
-    # JavaScript code to load the IFC model into the viewer
+    # Adjusted JavaScript code to load the IFC model into the viewer
     js_code = f"""
     <div id="ifc-container" style="width: 100%; height: 600px;"></div>
     <script type="module">
-    import IfcViewerAPI from "https://unpkg.com/ifc/web-ifc-viewer@0.0.29/dist/ifc-viewer-api.js";
+        import IfcViewerAPI from "https://unpkg.com/ifc/web-ifc-viewer@0.0.29/dist/ifc-viewer-api.js";
+        
+        const viewer = new IfcViewerAPI({{
+            container: document.getElementById('ifc-container'),
+            backgroundColor: [0, 0, 0]
+        }});
+        viewer.IFC.setWasmPath("https://unpkg.com/ifc/");
+        viewer.shadowDropper.isEnabled = false;
+        viewer.grid.setGrid();
+        viewer.axes.setAxes();
 
-    const viewer = new IfcViewerAPI({
-        container: document.getElementById('ifc-container'),
-        backgroundColor: [255, 255, 255]
-    });
-    viewer.IFC.setWasmPath("https://unpkg.com/ifc/");
-    viewer.shadowDropper.isEnabled = false;
-    viewer.grid.setGrid();
-    viewer.axes.setAxes();
+        async function loadModel(base64) {{
+            try {{
+                const response = await fetch(base64);
+                const buffer = await response.arrayBuffer();
+                await viewer.IFC.loadIfc(buffer, false);
+                console.log("Model loaded successfully");
+            }} catch (error) {{
+                console.error("Error loading model:", error);
+            }}
+        }}
 
-    async function loadModel(base64) {
-        try {
-            const response = await fetch(base64);
-            const buffer = await response.arrayBuffer();
-            await viewer.IFC.loadIfc(buffer, false);
-            console.log("Model loaded successfully");
-        } catch (error) {
-            console.error("Error loading model:", error);
-        }
-    }
-
-    loadModel("{{file_data}}");
-</script>
-
+        loadModel("data:;base64,{base64_file}");
+    </script>
     """
     # Use Streamlit's HTML component to render the custom HTML with JavaScript
     st.components.v1.html(js_code, height=600, scrolling=True)

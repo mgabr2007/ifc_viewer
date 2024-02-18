@@ -15,14 +15,14 @@ if uploaded_file is not None:
     container.style = "width: 100%; height: 600px;";
     element.append(container);
 
-    // Import IFC.js web ifc API
+    # Import IFC.js web ifc API
     import("https://unpkg.com/web-ifc/web-ifc-api.js").then((ifcAPI) => {{
         const viewer = new ifcAPI.IfcViewerAPI({{ container }});
         viewer.shadowDropper.isEnabled = false; // Adjust based on your needs
         viewer.grid.setGrid();
         viewer.axes.setAxes();
 
-        // Load the IFC model
+        # Load the IFC model
         viewer.IFC.loadIfcUrl("{uploaded_file.name}", false).then(() => {{
             console.log("Model loaded successfully!");
         }}).catch(err => console.error(err));

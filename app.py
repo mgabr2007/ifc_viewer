@@ -16,16 +16,14 @@ if uploaded_file is not None:
     container.style = "width: 100%; height: 600px;";
     document.body.appendChild(container); // Ensure the container is appended to the body
 
-    // Import IFC.js web ifc API
+    
     import("https://unpkg.com/ifc/web-ifc-api.js").then((ifcAPI) => {{
         const viewer = new ifcAPI.IfcViewerAPI({{ container }});
         viewer.shadowDropper.isEnabled = false; // Adjust based on your needs
         viewer.grid.setGrid();
         viewer.axes.setAxes();
 
-        // Prepare to load the IFC model - adjust this part based on IFC.js capabilities
-        // This example assumes IFC.js can handle Base64 encoded data directly or through a workaround
-        // You might need to adjust or implement a method to handle Base64 data in IFC.js
+
         const modelData = `{file_url}`;
         viewer.loadModel(modelData, {{}}).then(model => {{
             console.log("Model loaded successfully!", model);

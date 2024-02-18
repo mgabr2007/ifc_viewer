@@ -1,31 +1,35 @@
 import streamlit as st
 from streamlit_javascript import st_javascript
+import base64
 
 st.title('IFC File Viewer with IFC.js')
 
 uploaded_file = st.file_uploader("Choose an IFC file", type=['ifc'])
 if uploaded_file is not None:
-    # Temporary save uploaded file to disk to serve it to IFC.js
-    with open(uploaded_file.name, "wb") as f:
-        f.write(uploaded_file.getbuffer())
+    # Convert uploaded file to Base64 to inline it in JavaScript
+    base64_file = base64.b64encode(uploaded_file.getvalue()).decode('utf-8')
+    file_url = f"data:application/octet-stream;base64,{base64_file}"
 
     # JavaScript code to initialize IFC.js and load the uploaded model
     js_code = f"""
     const container = document.createElement("div");
     container.style = "width: 100%; height: 600px;";
-    element.append(container);
+    document.body.appendChild(container); // Ensure the container is appended to the body
 
-    # Import IFC.js web ifc API
-    import("https://unpkg.com/web-ifc/web-ifc-api.js").then((ifcAPI) => {{
+    // Import IFC.js web ifc API
+    import("https://unpkg.com/ifc/web-ifc-api.js").then((ifcAPI) => {{
         const viewer = new ifcAPI.IfcViewerAPI({{ container }});
         viewer.shadowDropper.isEnabled = false; // Adjust based on your needs
         viewer.grid.setGrid();
         viewer.axes.setAxes();
 
-        # Load the IFC model
-        viewer.IFC.loadIfcUrl("{uploaded_file.name}", false).then(() => {{
-            console.log("Model loaded successfully!");
-        }}).catch(err => console.error(err));
+        // Prepare to load the IFC model - adjust this part based on IFC.js capabilities
+        // This example assumes IFC.js can handle Base64 encoded data directly or through a workaround
+        // You might need to adjust or implement a method to handle Base64 data in IFC.js
+        const modelData = `{file_url}`;
+        viewer.loadModel(modelData, {{}}).then(model => {{
+            console.log("Model loaded successfully!", model);
+        }}).catch(err => console.error("Error loading model:", err));
     }});
     """
 

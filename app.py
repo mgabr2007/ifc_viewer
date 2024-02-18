@@ -2,31 +2,39 @@ import streamlit as st
 import base64
 import ifcopenshell
 import json
+import tempfile
 
-st.title('IFC File Viewer with Enhanced Data Processing')
+st.title('Enhanced IFC File Viewer')
 
 # Function to process IFC file with ifcopenshell and extract relevant data
-def process_ifc_file(ifc_file):
-    ifc_model = ifcopenshell.open(ifc_file.name)
-    # Example: Extract some basic data from the IFC file
-    # This part can be customized to extract the data you're interested in
+def process_ifc_file(ifc_file_path):
+    ifc_model = ifcopenshell.open(ifc_file_path)
     projects = ifc_model.by_type("IfcProject")
     data = [{"name": project.Name, "description": project.Description} for project in projects]
     return json.dumps(data)  # Return data as JSON for simplicity
 
+# Function to save uploaded file to temporary file and return path
+def save_uploaded_file(uploaded_file):
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.ifc') as tmp_file:
+        tmp_file.write(uploaded_file.getvalue())
+        return tmp_file.name  # Return the path of the saved file
+
 uploaded_file = st.file_uploader("Choose an IFC file", type=['ifc'])
 if uploaded_file is not None:
+    # Save uploaded file to a temporary file and get the path
+    temp_file_path = save_uploaded_file(uploaded_file)
+
     # Process the IFC file with ifcopenshell
-    processed_data = process_ifc_file(uploaded_file)
+    processed_data = process_ifc_file(temp_file_path)
     
-    # Present structured IFC data in the UI
+    # Display processed IFC data
     st.json(processed_data)  # Example of presenting JSON data; customize as needed
 
     # Convert uploaded file to Base64 for the viewer
     base64_file = base64.b64encode(uploaded_file.getvalue()).decode('utf-8')
     file_data = f"data:application/octet-stream;base64,{base64_file}"
 
-    # JavaScript code remains the same to load the IFC model into the viewer
+    # JavaScript code to load the IFC model into the viewer
     js_code = f"""
     <div id="ifc-container" style="width: 100%; height: 600px;"></div>
     <script type="module">
@@ -54,7 +62,7 @@ if uploaded_file is not None:
         }});
     </script>
     """
-    # Using Streamlit's HTML component to render the custom HTML with JavaScript
+    # Use Streamlit's HTML component to render the custom HTML with JavaScript
     st.components.v1.html(js_code, height=600, scrolling=True)
 else:
     st.write("Upload an IFC file to view it.")

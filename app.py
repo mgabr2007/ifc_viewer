@@ -11,21 +11,28 @@ if uploaded_file is not None:
 
     # Embedding IFC.js and initializing it within an HTML template
     html_code = f"""
-    <div id="ifc-container" style="width: 100%; height: 600px;"></div>
-    <script type="module">
-        import IfcViewerAPI from "https://unpkg.com/ifc/web-ifc-viewer.js";
-        
-        const viewer = new IfcViewerAPI({{ container: document.getElementById('ifc-container') }});
-        viewer.shadowDropper.isEnabled = false;
-        viewer.grid.setGrid();
-        viewer.axes.setAxes();
+<div id="ifc-container" style="width: 100%; height: 600px;"></div>
+<script type="module">
+    import IfcViewerAPI from "https://unpkg.com/ifc/web-ifc-viewer.js";
+    
+    const viewer = new IfcViewerAPI({{ container: document.getElementById('ifc-container'), pick: true }});
+    viewer.IFC.loader.ifcManager.applyWebIfcConfig({ COORDINATE_TO_ORIGIN: true, USE_FAST_BOOLS: false });
+    viewer.shadowDropper.isEnabled = false;
+    viewer.grid.setGrid();
+    viewer.axes.setAxes();
 
-        // Assuming the viewer can load Base64 encoded data; adjust accordingly
-        // This is a placeholder and may need actual implementation to handle Base64 data
-        const modelData = "{file_data}";
-        // Load your model into the viewer here
-    </script>
-    """
+    async function loadModel(base64) {
+        const response = await fetch(base64);
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        viewer.IFC.loadIfcUrl(url);
+    }
+
+    const modelData = "data:application/octet-stream;base64,{base64_file}";
+    loadModel(modelData);
+</script>
+"""
+
 
     # Using Streamlit's components to render the custom HTML with JavaScript
     st.components.v1.html(html_code, height=600)

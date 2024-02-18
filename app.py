@@ -1,8 +1,9 @@
 import streamlit as st
+from streamlit_javascript import st_javascript
 import base64
 import tempfile
 
-st.title('IFC File Viewer')
+st.title('IFC File Viewer with Streamlit JavaScript')
 
 def save_uploaded_file(uploaded_file):
     with tempfile.NamedTemporaryFile(delete=False, suffix='.ifc') as tmp_file:
@@ -18,36 +19,34 @@ if uploaded_file is not None:
     base64_file = base64.b64encode(uploaded_file.getvalue()).decode('utf-8')
     file_data = f"data:application/octet-stream;base64,{base64_file}"
 
-    # Adjusted JavaScript code to load the IFC model into the viewer
+    # Prepare JavaScript code for execution
     js_code = f"""
-    <div id="ifc-container" style="width: 100%; height: 600px;"></div>
-    <script type="module">
-        import IfcViewerAPI from "https://unpkg.com/ifc/web-ifc-viewer@0.0.29/dist/ifc-viewer-api.js";
-        
-        const viewer = new IfcViewerAPI({{
-            container: document.getElementById('ifc-container'),
-            backgroundColor: [0, 0, 0]
-        }});
-        viewer.IFC.setWasmPath("https://unpkg.com/ifc/");
-        viewer.shadowDropper.isEnabled = false;
-        viewer.grid.setGrid();
-        viewer.axes.setAxes();
+        const container = document.createElement('div');
+        container.style.width = '100%';
+        container.style.height = '600px';
+        document.body.appendChild(container);
 
-        async function loadModel(base64) {{
-            try {{
-                const response = await fetch(base64);
+        import('https://unpkg.com/ifc/web-ifc-viewer@0.0.29/dist/ifc-viewer-api.js').then((module) => {{
+            const IfcViewerAPI = module.default;
+            const viewer = new IfcViewerAPI({{
+                container: container,
+                backgroundColor: [255, 255, 255]
+            }});
+            viewer.IFC.setWasmPath('https://unpkg.com/ifc/');
+            viewer.shadowDropper.isEnabled = false;
+            viewer.grid.setGrid();
+            viewer.axes.setAxes();
+
+            (async () => {{
+                const response = await fetch('data:;base64,{base64_file}');
                 const buffer = await response.arrayBuffer();
                 await viewer.IFC.loadIfc(buffer, false);
-                console.log("Model loaded successfully");
-            }} catch (error) {{
-                console.error("Error loading model:", error);
-            }}
-        }}
-
-        loadModel("data:;base64,{base64_file}");
-    </script>
+                console.log('Model loaded successfully');
+            }})().catch(console.error);
+        }}).catch(console.error);
     """
-    # Use Streamlit's HTML component to render the custom HTML with JavaScript
-    st.components.v1.html(js_code, height=600, scrolling=True)
+
+    # Execute JavaScript code
+    result = st_javascript(js_code)
 else:
     st.write("Upload an IFC file to view it.")

@@ -1,19 +1,9 @@
 import streamlit as st
 import base64
-import ifcopenshell
-import json
 import tempfile
 
-st.title('Enhanced IFC File Viewer')
+st.title('IFC File Viewer')
 
-# Function to process IFC file with ifcopenshell and extract relevant data
-def process_ifc_file(ifc_file_path):
-    ifc_model = ifcopenshell.open(ifc_file_path)
-    projects = ifc_model.by_type("IfcProject")
-    data = [{"name": project.Name, "description": project.Description} for project in projects]
-    return json.dumps(data)  # Return data as JSON for simplicity
-
-# Function to save uploaded file to temporary file and return path
 def save_uploaded_file(uploaded_file):
     with tempfile.NamedTemporaryFile(delete=False, suffix='.ifc') as tmp_file:
         tmp_file.write(uploaded_file.getvalue())
@@ -23,12 +13,6 @@ uploaded_file = st.file_uploader("Choose an IFC file", type=['ifc'])
 if uploaded_file is not None:
     # Save uploaded file to a temporary file and get the path
     temp_file_path = save_uploaded_file(uploaded_file)
-
-    # Process the IFC file with ifcopenshell
-    processed_data = process_ifc_file(temp_file_path)
-    
-    # Display processed IFC data
-    st.json(processed_data)  # Example of presenting JSON data; customize as needed
 
     # Convert uploaded file to Base64 for the viewer
     base64_file = base64.b64encode(uploaded_file.getvalue()).decode('utf-8')

@@ -22,29 +22,31 @@ if uploaded_file is not None:
     js_code = f"""
     <div id="ifc-container" style="width: 100%; height: 600px;"></div>
     <script type="module">
-        import IfcViewerAPI from "https://unpkg.com/ifc/web-ifc-viewer@0.0.29/dist/ifc-viewer-api.js";
-        
-        const viewer = new IfcViewerAPI({{
-            container: document.getElementById('ifc-container'),
-            backgroundColor: [255, 255, 255]
-        }});
-        viewer.IFC.setWasmPath("https://unpkg.com/ifc/");
-        viewer.shadowDropper.isEnabled = false;
-        viewer.grid.setGrid();
-        viewer.axes.setAxes();
+    import IfcViewerAPI from "https://unpkg.com/ifc/web-ifc-viewer@0.0.29/dist/ifc-viewer-api.js";
 
-        async function loadModel(base64) {{
+    const viewer = new IfcViewerAPI({
+        container: document.getElementById('ifc-container'),
+        backgroundColor: [255, 255, 255]
+    });
+    viewer.IFC.setWasmPath("https://unpkg.com/ifc/");
+    viewer.shadowDropper.isEnabled = false;
+    viewer.grid.setGrid();
+    viewer.axes.setAxes();
+
+    async function loadModel(base64) {
+        try {
             const response = await fetch(base64);
             const buffer = await response.arrayBuffer();
-            return viewer.IFC.loadIfc(buffer, false);
-        }}
-
-        loadModel("{file_data}").then(model => {{
-            console.log("Model loaded", model);
-        }}).catch(error => {{
+            await viewer.IFC.loadIfc(buffer, false);
+            console.log("Model loaded successfully");
+        } catch (error) {
             console.error("Error loading model:", error);
-        }});
-    </script>
+        }
+    }
+
+    loadModel("{{file_data}}");
+</script>
+
     """
     # Use Streamlit's HTML component to render the custom HTML with JavaScript
     st.components.v1.html(js_code, height=600, scrolling=True)
